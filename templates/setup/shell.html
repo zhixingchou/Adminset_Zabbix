@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% block self_head_css_js %}
+    <script src="/static/layer/layer.js"></script>
+    <link rel="stylesheet" href="/static/plugins/select2/select2.min.css">
+    <script src="/static/plugins/select2/select2.full.min.js"></script>
+{% endblock %}
+{% block content %}
+<script>
+    window.onload=init;
+    function init() {
+        showhide(3);
+    }
+    function showhide(n) {
+        var box = document.getElementById("setup");
+        box.className="active";
+        var box = document.getElementById("shell");
+        box.className="active";
+    }
+</script>
+
+
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="box box-default">
+        <div class="box-header with-border">
+        </div>
+        <!-- /.box-header -->
+        <div class="box-body">
+          <div class="row">
+
+            <div class="col-md-6">
+            <form action="{% url 'exec_scripts' %}" method="post">
+                                      {% csrf_token %}
+              <div class="form-group">
+                <label>选择主机</label>
+                <select id="mserver" name="mserver" class="form-control select2" multiple="multiple" data-placeholder="选择主机(host)" style="width: 100%;">
+                    {% for host in all_host %}
+                        <option value="{{ host.hostname }}">{{ host.hostname }}</option>
+                    {% endfor %}
+                </select>
+              </div>
+              <div class="form-group">
+                <label>选择属组</label>
+                <select id="mgroup" name="mgroup" class="form-control select2" multiple="multiple" data-placeholder="选择属组(group)" style="width: 100%;">
+                    {% for group in all_group %}
+                        <option value="{{ group.name }}">{{ group.name }}</option>
+                    {% endfor %}
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Scripts</label>
+                <select id="mscripts" name="mscripts" class="form-control" multiple="multiple" data-placeholder="scripts" style="width: 100%;">
+                    {% for script in all_scripts %}
+                        <option value="{{ script }}">{{ script }}</option>
+                    {% endfor %}
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Scripts Args</label>
+                <input type="text" id="margs" name="margs" class="form-control" placeholder="args1 args2..." style="width: 100%;">
+              </div>
+            <div class="form-group ">
+                  <label>Shell Command</label>
+                  <textarea onblur="return checkBlur()" onfocus="checkFocus()" style="padding-bottom: 15px;" id="mcommand" name="mcommand" rows="6" class="form-control" placeholder="use enter spilt and command"></textarea>
+                </div>
+              <!-- /.form-group -->
+            <input type="submit" id="shell_submit" class="btn btn-primary" style="width: 60pt; font-size: medium;" value="执行">
+                <!-- /.form-group -->
+            </form>
+            </div>
+            <!-- /.col -->
+          <!-- /.row -->
+        </div>
+        <!-- /.box-body -->
+      </div>
+    </div>
+    </section>
+        <!-- /.content -->
+      </div>
+<script>
+  $(function () {
+    //Initialize Select2 Elements
+    $("#mserver").select2().on("select2:select", function () { $("#mgroup").prop("disabled", true); });
+    $("#mserver").select2().on("select2:unselect", function () { $("#mgroup").prop("disabled", false); });
+    $("#mgroup").select2().on("select2:select", function () { $("#mserver").prop("disabled", true); });
+    $("#mgroup").select2().on("select2:unselect", function () { $("#mserver").prop("disabled", false); });
+    $("#mscripts").select2().on("select2:select", function () { $("#mcommand").prop("disabled", true); });
+    $("#mscripts").select2().on("select2:unselect", function () { $("#mcommand").prop("disabled", false); });
+
+    $("#shell_submit").click(function(){
+
+        if ($('#mserver').val() == null && $('#mgroup').val() == null) {
+            layer.msg("请选目标服务器或组!");
+            return false;
+        }
+        if ($('#mscripts').val() == null && $('#mcommand').val() == "") {
+            layer.msg("请选要执行的Scripts或shell command!");
+            return false;
+        }
+        var obj = $('#mserver').val() || $('#mgroup').val();
+        var act = $('#mscripts').val() || $('#mcommand').val();
+
+        if(confirm("确定在"+obj+"上执行"+act+"？"))
+            layer.load(1, {
+                shade: [0.5,'#f4f4f4'] //0.1透明度的白色背景
+            });
+        else
+            return false;
+
+    });
+  });
+</script>
+<script>
+function checkBlur(){
+    if ($('#mcommand').val() == "") {
+        document.getElementById("mscripts").removeAttribute('disabled');
+        document.getElementById("margs").removeAttribute('disabled');
+    }
+}
+function checkFocus(){
+    document.getElementById("mscripts").setAttribute('disabled','disabled');
+    document.getElementById("margs").setAttribute('disabled','disabled');
+}
+</script>
+{% endblock %}

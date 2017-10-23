@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<!--
+This is a starter template page. Use this page to start your new project from
+scratch. This page gets rid of all links and provides the needed markup only.
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>AdminSet</title>
+  <!-- Tell the browser to be responsive to screen width -->
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    {% include 'link_css.html' %}
+    {% include 'head_script.html' %}
+    {% block self_head_css_js %} {% endblock %}
+
+
+
+
+
+<!--第三方插件样式-->
+<!--<link href="/static/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">-->
+<!--<link href="/static/vendor/datatable/datatable.css" rel="stylesheet">-->
+<!--<link href="/static/vendor/metismenu/metis-menu.min.css" rel="stylesheet">-->
+<!--<link href="/static/vendor/alert/sweet-alert.css" rel="stylesheet">-->
+<!--<link href="/static/vendor/bootstrap-multiselect.css" rel="stylesheet">-->
+<!--<link href="/static/vendor/validform.css" rel="stylesheet">-->
+<!--<link href="/static/vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">-->
+<!--<link href="/static/vendor/bootstrap/css/bootstrap-datetimepicker.css" rel="stylesheet">-->
+
+<!-- js add by zhouzx -->
+
+
+<!-- by zhouzx -- from roncoo-cmdb -->
+<style type="text/css">
+.navbar-header{
+    width: 200px;
+    text-align: center;
+}
+.navbar-brand{
+    font-size: 20px;
+
+}
+.table{
+    margin-top: 10px;
+}
+
+.hover{
+    cursor: pointer;
+}
+.progress-reboot{
+    position: absolute;
+    height: 2px;
+    top:0px;
+    background: #337ab7;
+    width: 0%;
+    z-index: 2000;
+}
+#main-content{
+    overflow-x:auto;
+}
+#main-content .add-btn{
+    position: absolute;
+    z-index:100;
+    width: 200px;
+}
+#wrapper{
+    background: #2e3c4e;
+}
+.navbar-default .navbar-nav>li>a{
+    color:white;
+}
+.navbar-default .navbar-nav>li>a:hover{
+    background: #299d71;
+}
+
+.navbar-default .navbar-brand{
+    color:white;
+}
+
+.navbar-default .navbar-brand:hover{
+    color:white;
+}
+.select2-container{
+    width: 100% !important;
+}
+button.detail{
+    margin-left: 10px;
+}
+.sweet-alert h2{
+    margin-top: 30px;
+}
+
+
+.NoNewline {  word-break: keep-all;  }
+.server_list_button{float:right; margin-right: 10px;margin-bottom: 10px;}
+#host_list{ height: 250px; overflow-y: scroll;border:1px solid #ccc; width:220px;padding-left:10px;float:left;margin-right:20px;}
+.modal-body{min-height: 280px;}
+#zabbix_group{width:200px;}
+
+</style>
+
+
+<script>
+    $(document).ready(function(){
+    $('.loading').fadeOut();
+});
+</script>
+</head>
+<body class="hold-transition skin-yellow-light sidebar-mini">
+<div class="loading"></div>
+<div class="wrapper">
+
+  <!-- Main Header -->
+
+  {% include temp_name %}
+<script type="text/javascript">
+    $('.loading').animate({'width':'10%'},50);  //第一个进度节点
+</script>
+  <!-- Left side column. contains the logo and sidebar -->
+  {% include 'main-sidebar.html' %}
+
+<script type="text/javascript">
+    $('.loading').animate({'width':'25%'},50);  //第一个进度节点
+</script>
+  <!-- Content Wrapper. Contains page content -->
+    {% block content %}{% endblock %}
+  <!-- /.content-wrapper -->
+<script type="text/javascript">
+    $('.loading').animate({'width':'60%'},50);  //第一个进度节点
+</script>
+  <!-- Main Footer -->
+  {% include 'footer.html' %}
+<script type="text/javascript">
+    $('.loading').animate({'width':'100%'},50);  //第一个进度节点
+</script>
+  <!-- Control Sidebar -->
+  {% include 'control-sidebar.html' %}
+
+  <!-- /.control-sidebar -->
+  <!-- Add the sidebar's background. This div must be placed
+       immediately after the control sidebar -->
+  <div class="control-sidebar-bg"></div>
+</div>
+<!-- ./wrapper -->
+
+</body>
+{% block self_footer_js %} {% endblock %}
+</html>

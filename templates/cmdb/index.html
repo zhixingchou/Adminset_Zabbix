@@ -1,0 +1,516 @@
+{% extends 'base.html' %}
+{% load mytags %}
+{% block self_head_css_js %}
+<script src="/static/layer/layer.js"></script>
+<script src="/static/js/base.js"></script>
+<script src="/static/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/static/plugins/datatables/dataTables.bootstrap.min.js"></script>
+<script src="/static/plugins/datatables/dataTables.bootstrap.css"></script>
+
+{% endblock %}
+{% block content %}
+<script>
+    window.onload = init;
+
+    function init() {
+        showhide(2);
+    }
+
+    function showhide(n) {
+        var box = document.getElementById("cmdb");
+        box.className = "active";
+        var box = document.getElementById("asset");
+        box.className = "active";
+    }
+</script>
+<script>
+    $(document).ready(function () {
+        $('.asset_del').click(function () {
+            var row = $(this).closest('tr');
+            if (confirm("确定删除?")) {
+                $.get(
+                    $(this).attr('value'),
+                    {},
+                    function (data) {
+                        row.remove()
+                    }
+                )
+            }
+        });
+    });
+</script>
+
+
+<div class="modal fade" id="update" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">×</button>
+                <h4>同步到zabbix</h4>
+            </div>
+            <div class="modal-body">
+                <div id="host_list"></div>
+                <select class="form-control" id="zabbix_group">
+                </select>
+                <br>
+                <br>
+                <button class="btn btn-primary" id="create">提交</button>
+            </div>
+            <div class="modal-footer">
+                <input class="btn btn-default" data-dismiss="modal" aria-hidden="true" type="button" value="取消">
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<!--监控查看 -->
+<div id="monitor" class="modal fade text-center" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" style="display: inline-block; width: 60%;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">监控查看</h4>
+            </div><!--modal-header end-->
+
+            <div class="modal-body">
+                <p hidden id="errorMsg" class="text-danger" style="color:red">监控查看</p> <!-- foe error msg-->
+                <form class="form-horizontal" id="ChangePasswdForm">
+                    <input id="passwdid" type="hidden" name="passwdid">  <!--update need id-->
+                    <div class="form-group">
+                        <div class="col-sm-10" id="graph">
+
+
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="modal-footer">
+                            <button class="btn btn-warning" data-dismiss="modal">退出</button>
+                        </div>
+                    </div><!--button end-->
+                </form>
+            </div><!-- /.modal-body-->
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+<!-- 模态框（Modal） -->
+<div class="modal fade text-center" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog" style="display: inline-block; width: 60%;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                    &times;
+                </button>
+                <h4 class="modal-title" id="myModalLabel">
+                    监控查看
+                </h4>
+            </div>
+            <div class="modal-body">
+                <!--在这里添加一些文本-->
+                <p hidden id="errorMsg" class="text-danger" style="color:red">监控查看</p> <!-- foe error msg-->
+                <!--<form class="form-horizontal" id="ChangePasswdForm">-->
+                    <!--<input id="passwdid" type="hidden" name="passwdid">  &lt;!&ndash;update need id&ndash;&gt;-->
+                    <!--<div class="form-group">-->
+                        <div class="col-sm-10" id="graph">
+
+
+                        </div>
+                    <!--</div>-->
+
+            </div>
+            <div class="modal-footer">
+                <!--<button type="button" class="btn btn-default" data-dismiss="modal">关闭-->
+                <!--</button>-->
+                <!--<button type="button" class="btn btn-primary">-->
+                <!--提交更改-->
+                <!--</button>-->
+                <button class="btn btn-warning" data-dismiss="modal">退出</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+
+
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <form action="" method="post" id="asset_form">
+            {% csrf_token %}
+            <div class="box">
+                <div class="box-header">
+                    <div class="col-sm-2" style="padding-left: 0">
+                        <a href="{% url 'asset_add' %}">
+                            <li class="btn btn-success"><b>添加设备</b></li>
+                        </a>
+                    </div>
+                    <div class="col-sm-5" style="padding-left: 0px">
+                        <label>
+                            <select name="idc" class="form-control m-b input-sm" onchange="change_info()">
+                                <option value="">机房</option>
+                                {% for idc in idc_info %}
+                                {% ifequal idc.name idc_name %}
+                                <option value="{{idc.name}}" selected> {{ idc.name|slice:":20" }}</option>
+                                {% else %}
+                                <option value="{{idc.name}}"> {{ idc.name|slice:":20" }}</option>
+                                {% endifequal %}
+                                {% endfor %}
+                            </select>
+                        </label>
+
+                        <label>
+                            <select name="group" class="form-control m-b input-sm" onchange="change_info()">
+                                <option value="">主机组</option>
+                                {% for asset_group in group_info %}
+                                {% ifequal asset_group.name group_name %}
+                                <option value="{{ asset_group.name }}" selected> {{ asset_group.name|slice:":20" }}
+                                </option>
+                                {% else %}
+                                <option value="{{ asset_group.name }}"> {{ asset_group.name|slice:":20" }}</option>
+                                {% endifequal %}
+                                {% endfor %}
+                            </select>
+                        </label>
+
+                        <label>
+                            <select name="asset_type" class="form-control m-b input-sm" onchange="change_info()">
+                                <option value="">设备类型</option>
+                                {% for type in asset_types %}
+                                {% ifequal type.0|int2str asset_type %}
+                                <option value="{{ type.0 }}" selected> {{ type.1 }}</option>
+                                {% else %}
+                                <option value="{{ type.0 }}"> {{ type.1 }}</option>
+                                {% endifequal %}
+                                {% endfor %}
+                            </select>
+                        </label>
+
+                        <label>
+                            <select name="status" class="form-control m-b input-sm" onchange="change_info()">
+                                <option value="">设备状态</option>
+                                {% for s in asset_status %}
+                                {% ifequal s.0|int2str status %}
+                                <option value="{{ s.0 }}" selected> {{ s.1 }}</option>
+                                {% else %}
+                                <option value="{{ s.0 }}"> {{ s.1 }}</option>
+                                {% endifequal %}
+                                {% endfor %}
+                            </select>
+                        </label>
+                    </div>
+                    <div class="col-sm-4" style="padding-right: 0;">
+                        <div class="input-group inline-group padding-right: 10px">
+                            <input type="text" class="form-control m-b " id="search_input" name="keyword"
+                                   value="{{ keyword }}" placeholder="Search">
+                            <input type="text" style="display: none">
+                            <div class="input-group-btn ">
+                                <button id='search_btn' href="{% url 'cmdb' %}?search=true" type="button"
+                                        class="btn btn-primary " onclick="change_info()">
+                                    <b>&nbsp;搜索&nbsp;</b>
+                                </button>
+                                <a href="#" onclick="return export_excel()">
+                                    <li name="export" class="btn btn-success search-btn-excel"><b>&nbsp;导出&nbsp;</b>
+                                    </li>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-2" style="padding-right: 0">
+                        <a href="#" onclick="return updatezabbix()">
+                            <li class="btn btn-success"><b>update zabbix</b></li>
+                        </a>
+                    </div>
+
+
+                    <div id="export"></div>
+                </div>
+
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <table class="table table-striped table-bordered" id="dataform">
+                        <thead>
+                        <tr>
+                            <th>
+                                <input id="checkall" type="checkbox" class="i-checks" name="checkall" value="checkall"
+                                       data-editable='false' onclick="check_all('asset_form')">
+                            </th>
+                            <th>主机名</th>
+                            <th>管理IP</th>
+                            <th>属组</th>
+                            <th>CPU</th>
+                            <th>内存(G)</th>
+                            <th>机房</th>
+                            <th class="text-center">功能</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for host in assets.object_list %}
+                        <tr class="even gradeX">
+                            <td><input type="checkbox" id="id" class="i-checks" value="{{ host.id }}" name="id"/></td>
+                            <td><a href="#">
+                                <li style="list-style-type:none" onclick="return tanchu(this.value)"
+                                    value="{{ host.id }}"> {{ host.hostname }}
+                                </li>
+                            </a></td>
+                            <td>{{ host.ip }}</td>
+                            <td>{{ host.group }}</td>
+                            <td>{{ host.cpu_num }}</td>
+                            <td>{{ host.memory }}</td>
+                            <td>{{ host.idc }}</td>
+                            <td class="text-center" data-editable='false'>
+                                <a class="btn btn-sm btn-info" target="_blank"
+                                   href="http://{{ host.hostname }}.{{ webssh_domain }}:2222/ssh/host/{{ host.ip }}"
+                                   class="btn btn-xs btn-info">WebSSH</a>
+                                <a href="#">
+                                    <li class="btn btn-sm btn-info" onclick="return tanchu(this.value)"
+                                        value="{{ host.id }}">编辑
+                                    </li>
+                                </a>
+                                <a value="{% url 'asset_del' %}?id={{ host.id }}"
+                                   class="btn btn-sm btn-danger asset_del">删除</a>
+                                <a href="#">
+                                    <li class="btn btn-sm btn-info" onclick="return monitor_btn(this.value)"
+                                        value="{{ host.id }}">监控
+                                    </li>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    <div class="btn-group">
+                        <input type="button" id="asset_del" class="btn btn-danger" name="del_button" value="删除设备"/>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </section>
+    <!-- /.content -->
+    {#用于接收asset_edit.html中layui子层的传值#}
+    <input id="handle_status" value="" hidden="hidden">
+</div>
+
+<!--<script>-->
+<!--window.alert(5 + 6);-->
+<!--$("updatezabbix11").on('click',function(){-->
+<!--console.log("test");-->
+<!--})-->
+<!--</script>-->
+
+
+<script>
+    $(function () {
+        $("#example1").DataTable();
+        $('#dataform').DataTable({
+            "paging": true,
+            "lengthChange": true,
+            "searching": false,
+            "ordering": true,
+            "info": true,
+            "autoWidth": true
+        });
+    });
+</script>
+<script>
+    function checkSubmit() {
+        if (!confirm("确定删除？")) {
+            window.event.returnValue = false;
+        }
+    }
+</script>
+<script>
+    function tanchu(n) {
+        layer.open({
+            type: 2,
+            title: '修改主机信息',
+            closeBtn: 1,
+            area: ['700px', '550px'],
+            shadeClose: true, //点击遮罩关闭
+            content: ['/cmdb/asset/edit/' + n,],
+            end: function () {
+                var handle_status = $("#handle_status").val();
+                if (handle_status == '1') {
+                    layer.msg('保存成功！', {
+                        icon: 1,
+                        time: 2000 //2秒关闭（如果不配置，默认是3秒）
+                    }, function () {
+                        history.go(0);
+                    });
+                } else if (handle_status == '2') {
+                    layer.msg('修改失败！', {
+                        icon: 2,
+                        time: 2000 //2秒关闭（如果不配置，默认是3秒）
+                    }, function () {
+                        history.go(0);
+                    });
+                }
+            }
+        });
+    }
+</script>
+<script>
+    function change_info() {
+        var args = $("#asset_form").serialize();
+        window.location = "{% url 'cmdb' %}?" + args
+    }
+
+    function export_excel() {
+        var asset_id_all = getIDall();
+        if (asset_id_all == '') {
+            if (confirm('您没有勾选，是否导出全部信息？')) {
+                var args = $("#asset_form").serialize();
+                window.location = "{% url 'cmdb' %}?export=all&" + args
+            } else {
+                return false;
+            }
+        } else {
+            var args = $("#asset_form").serialize();
+            window.location = "{% url 'cmdb' %}?export=true&" + args
+        }
+    }
+
+    $("#search_input").keydown(function (e) {
+        if (e.keyCode == 13) {
+            change_info()
+        }
+    });
+</script>
+<script>
+    $('#asset_del').click(function () {
+        var asset_id_all = getIDall();
+        if (asset_id_all == '') {
+            alert("请至少选择一行!");
+            return false;
+        }
+        if (confirm("确定删除?")) {
+            $.ajax({
+                type: "post",
+                data: {asset_id_all: asset_id_all, csrfmiddlewaretoken: '{{ csrf_token }}'},
+                url: "{% url 'asset_del' %}?arg=batch",
+                success: function () {
+                    parent.location.reload();
+                }
+            });
+        }
+    });
+</script>
+
+
+<script>
+    function updatezabbix() {
+        console.log("testupdatezabbix")
+        $('#update').modal('show')
+        zabbix_group = $("#zabbix_group");
+        sync_host_list = $("#host_list");
+        var url = "/listapi?method=zabbix"
+        $.getJSON('/listapi?method=zbhost', function (data) {
+            console.log(data)
+            sync_host_list.empty();
+            server_list = JSON.parse(data['result']);
+            if (server_list['code'] == 0) {
+                $.each(server_list['result'], function (n, obj) {
+                    html = '<div class="checkbox">';
+                    html += '<label>';
+                    html += '<input type="checkbox" name="zabbix_hosts" class="zabbix_hosts" value="' + obj.ip + '">';
+                    html += obj.ip;
+                    html += '</label>';
+                    html += '</div>';
+                    sync_host_list.append(html);
+                });
+            }
+            else {
+
+                swal(data['errmsg']);
+            }
+
+        });
+        $.getJSON(url, function (data) {
+            data = JSON.parse(data['result']);
+            if (data['code'] == 0) {
+                $.each(data['result'], function (n, obj) {
+
+                    zabbix_group.append("<option value='" + obj.groupid + "'>" + obj.name + "</option>");
+                })
+            } else {
+                swal(data['errmsg'])
+            }
+        })
+    }
+
+    $("#create").click(function () {
+        console.log("test create")
+        hostids = new Array();
+        $("input[name='zabbix_hosts']:checked").each(function (i, n) {
+            hostids[i] = n.value
+        });
+        console.log(hostids)
+        zabbix_groupid = $("#zabbix_group").val();
+        console.log(zabbix_groupid)
+        $.post('/zabbixapi', {method: "add", hostids: hostids.toString(), groupid: zabbix_groupid},
+            function (data) {
+                data = JSON.parse(data);   //将json串转换为对象，然后取值
+                data = JSON.parse(data['result']) //object
+                console.log(data)
+                if (data['code'] == 0) {
+                    swal({
+                        title: "success",
+                        text: "添加成功",
+                        type: "success",
+                        confirmButtonText: '添加zabbi主机成功'
+                    }, function () {
+                        location.reload()
+                    })
+                } else {
+                    swal(data['errmsg'])
+                }
+
+            })
+    })
+    /*end of create*/
+
+
+</script>
+
+
+
+<script>
+    function monitor_btn(n) {
+        console.log("test host monitor")
+        console.log(n)
+        var url = "/getapi?method=" + "graph" + "&id=" + n
+        $.getJSON(url, function (data) {
+            data = JSON.parse(data['result'])
+            console.log(data)
+            if (data['code'] == 0) {
+                var str = ''
+                $.each(data.result, function (n, value) {
+                    str += "<img src=/static" + value + " " + 'style="width:100%"/><br >'
+                })
+                console.log(str)
+//                str = "<h1>test</h1>"
+//                $("#graph").html(str)
+                var mymodal = $('#myModal');
+//                mymodal.find('.modal-body').text('hello');
+                mymodal.find('.modal-body').html(str);
+                mymodal.modal('show');
+//                document.getElementById("graph").innerHTML="New text!";
+//                $('#monitor').modal('show')
+//                $('#myModal').modal('show')
+
+            } else {
+                swal("Error", data['errmsg'], "error")
+            }
+        })
+    }
+</script>
+
+{% endblock %}

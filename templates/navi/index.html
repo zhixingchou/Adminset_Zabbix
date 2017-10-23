@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block content %}
+<script>
+    window.onload=init;
+    function init() {
+        showhide(1);
+    }
+    function showhide(n) {
+        var box = document.getElementById("navi");
+        box.className="active";
+    }
+</script>
+
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+    <div>
+        <div class="box-body" >
+        {% if not allnavi %}
+            <a href="{% url 'add' %}"><span class="btn btn-default" ><b>添加一个导航</b> <i class="fa fa-plus"></i></span></a>
+        {% endif %}
+        {% if allnavi %}
+            {% for navi in allnavi %}
+                <a href="{{ navi.url }}" target="view_window">
+                    <div class="col-md-3" >
+                      <div class="box box-info">
+                        <div class="box-header with-border">
+                          <h3 class="box-title" >{{ navi.name }}</h3>
+                        </div><!-- /.box-header -->
+                        <div class="box-body">
+                          {{ navi.description }}
+                        </div><!-- /.box-body -->
+                      </div><!-- /.box -->
+                    </div>
+                </a>
+            {% endfor %}
+        {% endif %}
+        </div>
+        <!-- /.box-body -->
+        <!-- /.box-footer-->
+      </div>
+
+      <!-- Your Page Content Here -->
+    </section>
+    <!-- /.content -->
+  </div>
+{% endblock %}
