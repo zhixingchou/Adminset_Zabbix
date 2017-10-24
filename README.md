@@ -1,6 +1,6 @@
-# 集成开源自动化平台Adminset和roncoo-cmdb
+# 开源自动化平台Adminset集成roncoo-cmdb
 
-## 一、集成绑定、取消ZABBIX模板
+## 一、绑定、取消ZABBIX模板
 
 ![](https://i.imgur.com/4aEEwnv.png)
 
